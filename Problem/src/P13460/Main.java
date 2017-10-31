@@ -1,7 +1,10 @@
 package P13460;
 
+import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Scanner;
+
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MoveAction;
 
 public class Main {
 
@@ -53,7 +56,7 @@ public class Main {
 				else if(row.charAt(x) == 'B')
 					map.blueBall = node;
 				
-				node.setNode(x, y, value);
+				node.setNode(x, y, value, y * yLen + x);
 			}
 		}
 		
@@ -61,6 +64,8 @@ public class Main {
 		
 		// 로직 시작
 		map.printMap();
+		map.makePath();
+		map.printQueue();
 	}        
 
 }
@@ -74,17 +79,24 @@ class Map {
 	Node redBall;
 	Node blueBall;
 	
+	Queue<Node> pathQueue; // Queue로 세팅
+	
 	public Map(int yLen, int xLen) {
 		this.yLen = yLen;
 		this.xLen = xLen;
 		
 		arrNode = new Node[yLen][xLen];
 		
+		pathQueue = new LinkedList<Node>();
+		
 		for(int y = 0; y < yLen; y++) {
 			for(int x = 0; x < xLen; x++) {
-				
 				arrNode[y][x] = new Node();
-				
+			}
+		}
+		
+		for(int y = 0; y < yLen; y++) {
+			for(int x = 0; x < xLen; x++) {
 				if(y - 1 >= 0) { // 상
 					Node tempNode = arrNode[y - 1][x];
 					arrNode[y][x].setUpNode(tempNode);
@@ -128,9 +140,68 @@ class Map {
 	 * @param x : x좌표
 	 * @return value : 
 	 */
-//	public int moveBalls(int y, int x) { // y(-1): 상, y(+1): 하, x(-1): 좌, x(+1): 우
-//		
-//	}
+	public void makePath() { // y(-1): 상, y(+1): 하, x(-1): 좌, x(+1): 우
+		int count = 0;
+		
+		Node tempNode = redBall;
+		//Node pathNode = null;
+
+		while(count <= 10) {
+			if(count > 0 && pathQueue.size() != 0) {
+				tempNode = pathQueue.poll();
+				System.out.println(tempNode.id);
+				if(tempNode.getValue() == 'O') return;
+				count++;
+			}
+			else {
+				count++;
+			}
+			
+			if(tempNode.isVisit == false) {
+				tempNode.isVisit = true;
+				
+				if(tempNode.getUpNode() != null) {
+					if( tempNode.getUpNode().getValue() == '.' || tempNode.getUpNode().getValue() == 'O' ) {
+						Node pathNode = tempNode.moveNode(tempNode, "up");
+						
+						if(pathNode != null && !pathQueue.contains(pathNode) && !pathNode.isBlocked(pathNode, "up") && !pathNode.isVisit) {
+							pathQueue.add(pathNode);
+						}
+					}
+				}
+				
+				if(tempNode.getRightNode() != null) {
+					if( tempNode.getRightNode().getValue() == '.' || tempNode.getRightNode().getValue() == 'O' ) {
+						Node pathNode = tempNode.moveNode(tempNode, "right");
+						
+						if(pathNode != null && !pathQueue.contains(pathNode) && !pathNode.isBlocked(pathNode, "right") && !pathNode.isVisit) {
+							pathQueue.add(pathNode);
+						}
+					}
+				}
+				
+				if(tempNode.getDownNode() != null) {
+					if( tempNode.getDownNode().getValue() == '.' || tempNode.getDownNode().getValue() == 'O' ) {
+						Node pathNode = tempNode.moveNode(tempNode, "down");
+						
+						if(pathNode != null && !pathQueue.contains(pathNode) && !pathNode.isBlocked(pathNode, "down") && !pathNode.isVisit) {
+							pathQueue.add(pathNode);
+						}
+					}
+				}
+				
+				if(tempNode.getLeftNode() != null) {
+					if( tempNode.getLeftNode().getValue() == '.' || tempNode.getLeftNode().getValue() == 'O' ) {
+						Node pathNode = tempNode.moveNode(tempNode, "left");
+						
+						if(pathNode != null && !pathQueue.contains(pathNode) && !pathNode.isBlocked(pathNode, "left") && !pathNode.isVisit) {
+							pathQueue.add(pathNode);
+						}
+					}
+				}
+			}
+		}
+	}
 	
 	public void printMap() {
 		for(int y = 0; y < yLen; y++) {
@@ -140,12 +211,27 @@ class Map {
 			System.out.println("");
 		}
 	}
+	
+	public void printQueue() {
+		while(true) {
+			Node node = pathQueue.poll(); 
+			
+			if(node != null) {
+				System.out.println(node.value);
+			}
+			else {
+				return;
+			}
+		}
+	}
 }
 
 class Node {
 	int x, y; // x, y 좌표
 	Node leftNode, rightNode, upNode, downNode;
 	char value;
+	int id;
+	boolean isVisit;
 	
 	/**
 	 * x, y, 왼쪽, 오른쪽, 위, 아래 
@@ -156,10 +242,11 @@ class Node {
 	 * @param upNode
 	 * @param downNode
 	 */
-	public void setNode(int x, int y, char value) {
+	public void setNode(int x, int y, char value, int id) {
 		this.x = x;
 		this.y = y;
 		this.value = value;
+		this.id = id;
 	}
 
 	public Node getDownNode() {
@@ -201,6 +288,94 @@ class Node {
 	public char getValue() {
 		return value;
 	}
+	
+	public Node moveNode(Node node, String direction) {	
+		if(direction.equals("up")){
+			Node tempNode = node.getUpNode();
+			
+			if(tempNode != null) {
+				if( tempNode.getValue() == '.' ) {
+					return moveNode(tempNode, "up");
+				}
+				else if( tempNode.getValue() == 'O' ) {
+					return tempNode;
+				}
+			}
+		}
+		else if(direction.equals("right")){
+			Node tempNode = node.getRightNode();
+			
+			if(tempNode != null) {
+				if( tempNode.getValue() == '.' ) {
+					return moveNode(tempNode, "right");
+				}
+				else if( tempNode.getValue() == 'O' ) {
+					return tempNode;
+				}
+			}
+		}
+		else if(direction.equals("down")){
+			Node tempNode = node.getDownNode();
+			
+			if(tempNode != null) {
+				if( tempNode.getValue() == '.' ) {
+					return moveNode(tempNode, "down");
+				}
+				else if( tempNode.getValue() == 'O' ) {
+					return tempNode;
+				}
+			}
+		}
+		else if(direction.equals("left")){
+			Node tempNode = node.getLeftNode();
+			
+			if(tempNode != null) {
+				if( tempNode.getValue() == '.' ) {
+					return moveNode(tempNode, "left");
+				}
+				else if( tempNode.getValue() == 'O' ) {
+					return tempNode;
+				}
+			}
+		}
+		
+		return node;
+	}
+	
+	public boolean isBlocked(Node node, String direction) {
+		if(direction.equals("up")){
+			if(node.getLeftNode().getValue() != '.' && node.getRightNode().getValue() != '.') {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		else if(direction.equals("right")){
+			if(node.getUpNode().getValue() != '.' && node.getDownNode().getValue() != '.') {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		else if(direction.equals("down")){
+			if(node.getLeftNode().getValue() != '.' && node.getRightNode().getValue() != '.') {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		else { // "left"
+			if(node.getUpNode().getValue() != '.' && node.getDownNode().getValue() != '.') {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+	}
 }
 
 class Ball {
@@ -230,8 +405,3 @@ class Ball {
 	}
 }
 
-class AdjMap {
-	
-	Queue queue;
-	
-}
