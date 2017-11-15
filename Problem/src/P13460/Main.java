@@ -4,7 +4,6 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Scanner;
 
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MoveAction;
 
 public class Main {
 
@@ -13,7 +12,7 @@ public class Main {
 	 */
 	public static void main(String[] args) {
 
-		// 세로 가로 입력 s
+		// 세로 가로 입력(scanner 이용)
 		Scanner scanner = new Scanner(System.in);
 		
 		int yLen = 0;
@@ -64,8 +63,8 @@ public class Main {
 		
 		// 로직 시작
 		map.printMap();
-		map.makePath();
-		map.printQueue();
+		System.out.println(map.makePath());
+		//map.printQueue();
 	}        
 
 }
@@ -140,7 +139,7 @@ class Map {
 	 * @param x : x좌표
 	 * @return value : 
 	 */
-	public void makePath() { // y(-1): 상, y(+1): 하, x(-1): 좌, x(+1): 우
+	public int makePath() { // y(-1): 상, y(+1): 하, x(-1): 좌, x(+1): 우
 		int count = 0;
 		
 		Node tempNode = redBall;
@@ -150,11 +149,13 @@ class Map {
 			if(count > 0 && pathQueue.size() != 0) {
 				tempNode = pathQueue.poll();
 				System.out.println(tempNode.id);
-				if(tempNode.getValue() == 'O') return;
-				count++;
+				if(tempNode.getValue() == 'O') return count;
+			}
+			else if(count == 0) {
+				
 			}
 			else {
-				count++;
+				return -1;
 			}
 			
 			if(tempNode.isVisit == false) {
@@ -194,13 +195,17 @@ class Map {
 					if( tempNode.getLeftNode().getValue() == '.' || tempNode.getLeftNode().getValue() == 'O' ) {
 						Node pathNode = tempNode.moveNode(tempNode, "left");
 						
-						if(pathNode != null && !pathQueue.contains(pathNode) && !pathNode.isBlocked(pathNode, "left") && !pathNode.isVisit) {
+						if(pathNode != null && !pathQueue.contains(pathNode) && ( !pathNode.isBlocked(pathNode, "left") || pathNode.getValue() == 'O') && !pathNode.isVisit) {
 							pathQueue.add(pathNode);
 						}
 					}
 				}
 			}
+			
+			count++;
 		}
+		
+		return -1;
 	}
 	
 	public void printMap() {
