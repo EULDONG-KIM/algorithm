@@ -12,7 +12,7 @@ public class Main {
 	 */
 	public static void main(String[] args) {
 
-		// 세로 가로 입력(scanner 이용)
+		// 세로 가로 입력
 		Scanner scanner = new Scanner(System.in);
 		
 		int yLen = 0;
